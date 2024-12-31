@@ -1,0 +1,542 @@
+% Kale Ewasiuk (kalekje@gmail.com)
+% +REVDATE+
+% Copyright (C) 2025 Kale Ewasiuk
+%
+% Permission is hereby granted, free of charge, to any person obtaining a copy
+% of this software and associated documentation files (the "Software"), to deal
+% in the Software without restriction, including without limitation the rights
+% to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+% copies of the Software, and to permit persons to whom the Software is
+% furnished to do so, subject to the following conditions:
+%
+% The above copyright notice and this permission notice shall be included in
+% all copies or substantial portions of the Software.
+%
+% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+% ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+% TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+% PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT
+% SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+% ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+% ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+% OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+% OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+\documentclass[11pt,parskip=half]{scrartcl}
+\usepackage[left=0.75in,right=0.75in,top=1in,bottom=1in]{geometry}
+\setlength{\parindent}{0ex}
+\newcommand{\llcmd}[1]{\leavevmode\llap{\texttt{\detokenize{#1}}}}
+\newcommand{\cmd}[1]{\texttt{\detokenize{#1}}}
+\newcommand{\qcmd}[1]{``\cmd{#1}''}
+\usepackage{url}
+\usepackage[svgnames]{xcolor}
+\usepackage{showexpl}
+\lstset{explpreset={justification=\raggedright,pos=r,hsep=1cm,preset={\color{Navy}\small}}}
+\setlength\ResultBoxRule{0mm}
+\lstset{
+	language=[LaTeX]TeX,
+	basicstyle=\ttfamily\footnotesize\color{blue},
+	commentstyle=\ttfamily\footnotesize\color{gray},
+	frame=none,
+	numbers=left,
+	numberstyle=\ttfamily\footnotesize\color{gray},
+	prebreak=\raisebox{0ex}[0ex][0ex]{\color{gray}\ensuremath{\hookleftarrow}},
+	extendedchars=true,
+	breaklines=true,
+	tabsize=4,
+}
+\addtokomafont{title}{\raggedright}
+\addtokomafont{author}{\raggedright}
+\addtokomafont{date}{\raggedright}
+\author{Kale Ewasiuk (\url{kalekje@gmail.com})}
+\usepackage[yyyymmdd]{datetime}\renewcommand{\dateseparator}{--}
+\date{\today}
+
+\usepackage{enumitem}
+
+\RequirePackage{luatbls}
+
+\title{luatbls}
+\subtitle{Create, modify, and use Lua tables from within LaTeX}
+
+
+\begin{document}
+%
+
+\maketitle
+
+
+\subsection*{Introduction}
+
+This package provides a Lua-table interface based on the \cmd{luakeys} package:\\
+\url{https://mirror.quantum5.ca/CTAN/macros/luatex/generic/luakeys/luakeys.pdf}\\
+
+A global table called \cmd{luatbls} is created by loading this package. This table contains all user-defined tables
+as well as internal package functions and settings.
+User tables are stored directly under the module's table, so you can access a table within Lua by using:
+\cmd{luatbls['mytable']} or \cmd{luatbls.mytable}. Further, \cmd{luatbls} can be called directly to obtain a table item by \cmd{luatbls'i'},
+where \cmd{i} is a ``flexible'' indexing system discussed in the next paragraphs.
+
+If you want to change the \cmd{luakeys} global parser options, you can adjust them by:\\
+\cmd{\directlua{luatbls._luakeys.opts.OPTION = VALUE}}\\
+For debugging, set \cmd{\directlua{luatbls._debug = true}}
+
+
+In this documentation, arguments are represented as follows:\\
+\llcmd{t }: table name. If none provided, the most recent is used.\\
+\llcmd{k }: a string key.\\
+\llcmd{n }: an integer index.\\
+\llcmd{v }: a value.\\
+\llcmd{i }: the flexible indexer to get a single item.\\
+\llcmd{I }: the flexible indexer to get a single or multiple items.\\
+\llcmd{keyval }: a key-value string for the table. Standalone values are set to boolean.\\
+\llcmd{csv }: a key-value string where standalone values are parsed as array-like.
+
+There are a few ways to use the index (placeholder \cmd{i}.\\
+\cmd{t.k} where \cmd{t} is the table name and \cmd{k} is a string key (i.e. uses \cmd{luatbls.t.k}),\\
+\cmd{t/n} where \cmd{n} is an integer index (i.e. uses \cmd{t.k[n]}); note that negative indexes are allowed where -1 is the last element.
+Alternatively, \cmd{t} and the symbol can be omitted, and simply pass the element without the table name as a prefix,
+where the assumed table is the last one that was created or changed to (i.e. the most 'recent' table).
+In this case, passing a number will assume an integer index.
+
+To use a \cmd{I},
+you can explicitly select tables and groups of keys by \cmd{t|seq}, or \cmd{t.k}, or \cmd{t/n}.
+If no \cmd{|./} is provided, the recent table is used and the argument is assumed to be a sequence of keys.
+\cmd{penlightplus}'s command \cmd{penlight.seq.tbltrain()} syntax is used for \cmd{seq}uences.
+To summarize what \cmd{seq} can be, a comma-separated list of numbers or keys are used to specify which elements are iterated over.
+NumPy-like slicing is possibly with \cmd{:} to choose integer ranges.
+If \cmd{*} is provided,
+all string keys are iterated.
+If \cmd{I} is entirely blank, all elements of the recent table are used, which is equivalent to \cmd{t|*,:}.\\
+
+Note: nested tables are currently not fully supported. Some variations of commands have an \cmd{E} suffix which indicates
+that nested elements can be explicitly indexed.
+The table name must be specified, and the validity of table names and keys are not checked.
+
+The \cmd{tbl} commands fully expand the
+\cmd{t}, \cmd{k}, \cmd{n}, \cmd{i}, and \cmd{I} arguments. However a variation with an \cmd{N}-appended is usually provided
+which will not expand the \cmd{v}, \cmd{keyval}, or \cmd{csv} args.
+
+
+
+%%%
+\subsection*{Creating Tables}
+
+%\tblfrkv{kale}{kale=ewasiuk}
+%\luadirect{penlight.wrth(luatbls'kale.kale')}
+
+\cmd{\tblnew{t}} declares a new table with name \cmd{t}\\
+\cmd{\tblchg{t}} changes the 'recent' table\\
+\\
+\cmd{\tblfrkv{t}{keyval}[opts]} new table from key-vals using \cmd{luakeys} \\
+\cmd{\tblfrkvN{t}{keyval}[opts]} does not expand key-val string \cmd{luakeys} \\
+
+\cmd{\tblkvundefcheck} will throw an error if you use define a table from key-values
+and use a key that was not specified in the luakeys parse options via \cmd{opts.defaults} or \cmd{opts.defs}.\\
+\\
+ \cmd{\tblfrcsv{t}{csv}[opts]} a shorthand \cmd{\tblfrkv{t}{csv}[naked_as_value=true,opts]}, a good way to convert  a comma-separated list to an array\\
+ \cmd{\tblfrcsvN{t}{csv}[opts]} same as above, but the csv is not expanded.\\
+
+
+\subsection*{Setting, getting, and modifying}
+
+
+\cmd{\tblset{i}{v}} sets a value of the table/index \cmd{i} to \cmd{v}\\
+\cmd{\tblsetN{i}{v}} same as above, but the value is not expanded.\\
+\\
+\cmd{\tblget{i}} gets the value and \cmd{tex.sprint()}s it\\
+\cmd{\tblgetE{t.k}} An 'explicit' version of tbl get. Use this for nested tables. The tbl name must be specified.
+The validity of table names and keys are not checked.\\
+
+\begin{LTXexample}
+\tblfrkv{my}{a,b,c,first=john,last=smith}%
+	[defaults={x=0,1=one,n=false,y=yes}]
+\tblget{my.a}\\
+\tblset{a}{tRuE!!}
+\tblget{a}\\
+\tblget{my.x}\\
+\tblget{.x}\\
+\tbladd{my.newkey}{val}\tblget{newkey}\\
+\tbladd{nk}{VAL}\tblget{nk}\\
+\end{LTXexample}
+
+\begin{LTXexample}
+\tblfrcsv{EX}{x={1,2,{1,2,3}},name=me}
+\tblgetE{EX.x[1]}\\
+\tblgetE{EX.x[3][3]}\\
+\tblgetE{EX.name}\\
+\end{LTXexample}
+
+
+
+\cmd{\tbladd{i}{v}} add a new value to a table using index method\\
+\cmd{\tbladdN{i}{v}} above, but don't expand the value argument\\
+\\
+\cmd{\tblapp{t}{v}} append a \cmd{v}alue (integer-wise) to a \cmd{t}able\\
+\cmd{\tblappN{t}{v}}\\
+\\
+\cmd{\tblupd{t}{keyval}} update a \cmd{t}able with more \cmd{keyval}s\\
+\cmd{\tblupdN{t}{keyval}}\\
+\\
+\cmd{\tblcon{t}{csv}} concatenate array-style \cmd{csv} at the end of \cmd{t}\\
+\cmd{\tblconN{t}{csv}}\\
+
+
+
+\subsection*{Conditionals}
+
+\cmd{\tblif{i}{tr}[fa]} runs code \cmd{tr} if the item is true else \cmd{fa}\\
+\cmd{\tblifv{i}{tr}[fa]} runs code \cmd{tr} if the item is truth-y (using \cmd{pl.hasval}) else \cmd{fa}\\
+\cmd{\tblifeq{i}{v}{tr}[fa]} checks the equivalency of to a user-specified value. Quotes must be used to indicate strings.
+
+\begin{LTXexample}
+\tblfrcsv{x}{n=false,y=true,
+	k0="",kv=val,k2=6}
+\tblif{n}{tr}[FA]\\
+\tblif{k0}{TR}[fa]\\
+\tblifv{k0}{tr}[FA]\\
+\tblifeq{kv}{'val'}{TR}[fa]\\
+\tblifeq{k2}{6}{TR}[fa]\\
+\end{LTXexample}
+
+
+\subsection*{Iterating}
+%TODO use PIPE SYMBOLZ \dsadsa
+
+\cmd{\tblfor{I}{template}} and \cmd{\tblforN} By default, iterates over all elements (\cmd{seq = *,:}),
+but arbitrary indices/keys can be iterated over as per \cmd{penlight.seq.tbltrain} syntax.
+\cmd{<k>} and \cmd{<v>} are placeholders in the template that are replaced by the keys and vals and can be changed by:
+\cmd{\luadirect{luatbls._tblv = '<v>'}}
+
+If you want to iterate over a second-level tabel, you must use:\\
+\cmd{\tblforE} and \cmd{\tblforEN}, and explicitly provide the table and element.
+
+\begin{LTXexample}
+\tblfrcsv{x}{n1,k1=v1,n2,n3,n4,
+	     k2=v2,k3=v3,n5,n6}
+1> \tblfor{:}{<k> = <v>; }\\
+2> \tblfor{*}{<k> = <v>; }\\
+3> \tblfor{1,*,2::2}{<k> = <v>; }\\
+4> \tblfor{ x | 1,*,2::2}{<k> = <v>; }\\
+\tblfrcsv{x}{a,{a,b,c}}
+5> \tblforE{x[2]}{<k> = <v>; }
+\end{LTXexample}
+
+
+
+
+\subsection*{Definitions}
+\cmd{\tbldef{i}[cs]} pushes the value to macro \cmd{\cs}. If cs is not provided, a default cs name of \cmd{dtbl<t><k>} is used.\\
+\cmd{\tblgdef{i}[cs]} like above but global definition is used.\\
+
+\cmd{\tbldefs{I}[cspfx]} and \cmd{\tblgdefs{I}[cspfx]} defines items in table \cmd{t} (use recent if blank) with format \cmd{<cspfx><key>} where \cmd{cspfx} is a command sequence prefix.
+If \cmd{cspfx} is blank, keys will be defined as \cmd{dtbl<t><k>}.
+The default \cmd{cspfx} is changed by:\\\cmd{\luadirect{luatbls._cspfx = 'dtbl'}}\\
+Numerical keys are converted to capital letters: 1->A, 2->B.
+It is recommended that tables and keys contain letters only for predictable behaviour when using this feature.\\
+If the value of a tbl's key is a table, every element in that table is defined, and the keys of that nested table is
+appended to the cs: \cmd{dtbl<t><k1><k2>} (noting that numbers are converted to letters).\\
+
+
+\begin{LTXexample}
+\tblfrcsv{EX}{n1,kA=v1,n2,n3,n4,
+	     kB=v2,kC=v3,n5,n6}
+1>\tbldef{kA}{mycs}\mycs\tbldef{kA}{}\dtblEXkA\\
+2> \tbldef{EX/1}{}\dtblEXA
+\end{LTXexample}
+
+\begin{LTXexample}
+\tblfrcsv{EX}{x={1,2,3}}
+1>\tbldef{x}{mycs}\mycsA, \mycsB \\
+2>\tbldefs{}\dtblEXxA, \dtblEXxB
+\end{LTXexample}
+
+
+
+\cmd{\tbldefxy{i}[cspfx]} splits the value of item by space, and creates two definitions \cmd{<cspfx>x} and \cmd{<cspfx>y}.
+This might be useful for passing and using tikz coordinates, for example \cmd{xy=0 5}. An error is thrown if the values
+are non-numeric.\\
+
+\begin{LTXexample}[width=0.5\linewidth]
+\tblfrkv{EX}{coords=12 34,other}
+\tbldefxy{coords}[d]\dx, \dy \\
+\tbldefxy{coords}\dtblEXcoordsx, \dtblEXcoordsy \\
+\end{LTXexample}
+
+
+
+\subsection*{Utilities}
+
+\cmd{\tblapply{I}{func1(<v>,x,y)|:func2}[newtable]} apply a Lua function(s).\\If \cmd{newtable} is provided, a new table is created (and made the recent table)
+and the original table is preserved.\\ The \cmd{.}, \cmd{/} or \cmd{|} indexer may be used to apply a function
+to a single value or group of keys.
+Multiple functions can be applied sequentially, separated by \cmd{|}.
+
+An arbitrary global function (including additional arguments) can be used,
+but if a function is prefixed with a \cmd{:}, the class method will be called.
+The \cmd{stringx} and \cmd{tablex} methods
+from \cmd{penlight} are used depending on the value's type. See:\\
+\url{https://lunarmodules.github.io/Penlight/}
+
+Arguments can be specified with round brackets, where
+\cmd{<v>} and \cmd{<k>} are used as a placeholder for the values and keys.
+If no arguments are passed, it is assumed that the value is the only argument.
+Note that luakeys parses the args, so quotes are not needed around strings for the args.
+
+
+\begin{LTXexample}[width=0.5\linewidth]
+\tblfrcsv{ex}{{a, b, c}}
+\tblapply{}{:concat(<v>,-) | :upper}[new]
+1> \tblgetE{ex[1][1]}\\
+2> \tblget{new/1}\\
+\tblfrcsv{ex}{HelloWorld}
+\tblapply{}{string.sub(<v>,2,-5)}[new]
+3> \tblget{new/1}
+\end{LTXexample}
+
+%\begin{luacode*}
+% penlight.wrth(penlight.tablex.list2comma({'a','b','c'}),'XYZ')
+%\end{luacode*}
+
+%\tblprt*{ex}
+
+
+
+
+\cmd{\tblprt{t}} pretty-print the table in console. Using \cmd{\tblprt*{}} will terminate the LaTeX program immediately after and issue an error, which could be useful for debugging.
+
+
+%\begin{luacode*}
+%	for t, k, v in luatbls._iter_tbls_vals('my|*,:') do
+%	--for t, k, v in luatbls._iter_tbls_vals('my/1') do
+%		penlight.wrth({t,k,v})
+%	end
+%\end{luacode*}
+
+
+
+
+
+
+
+
+
+
+%
+%
+%\begin{LTXexample}
+%%% \kvtblundefcheck % would throw error
+%\tbldef{my.first}{mydef} \mydef\\
+%\tbldef{first}{}\dtblmyfirst\\
+%{\tbldef{last}{mydef} \mydef} \mydef\\
+%{\tblgdef{last}{mydef}} \mydef\\
+%
+%\tbldefall{}{}\dtblmyfirst\\
+%\tbldefall{my}{DEF}\DEFfirst
+%
+%\tblset{my.a}{12 36}
+%\tbldefxy{my.a}{coord} (\coordx,\coordy)
+%\tbldefxy{my.a}{} (\dtblmyax,\dtblmyay)
+%\tbldefxy{a}{} (\dtblmyax,\dtblmyay)
+%\end{LTXexample}
+%
+%\begin{LTXexample}
+%\tblfrcsv{me}{a,b,"c,see",d,e}
+%\tblget{me/1},\tblget{2}\\
+%\tblget{3}\\
+%\tblset{me/4}{D}\tblget{me/4}\tblget{/4}\\
+%\tblset{5}{E}\tblget{5}\\
+%\tblget{-2},\tblget{me/-1}\\
+%\tblget{/-3}\\
+%%% \tblget{k} % would throw error
+%
+%\tblfrkv{a=A,b=B,d=D}[defaults={a,b,c,d}]
+%%\dtblMa \dtblMb \dtblMc \dtblMd  # todo fix!
+%
+%\end{LTXexample}
+
+
+
+%\tblfrcsv{me}{
+%Hello=world,
+%
+%Bonjour=terre,
+%}
+%\tblget{Hello}
+%\tblget{Bonjour}
+
+
+\luadirect{luatbls._debug = true}
+
+\subsubsection*{An Example}
+%
+\begin{LTXexample}\scriptsize
+\NewDocumentCommand{\Exampletbl}{m}{
+	\tblfrcsv{ex}{#1}[defaults={sal=Hello}]
+	%\tblkvundefcheck
+	\tblapply{ex.auth}{:list2comma}
+	\tblget{sal}, \tblget{auth}! Thank you for writing such a great novel.
+	My favorite parts were:
+	\begin{description}
+		\tblforEN{ex.chaps}{\item[<k>] <v> }
+	\end{description}
+	It was also very cool to learn that
+	\tblgetE{ex.num[1]}*\tblgetE{ex.num[2]}=
+	\luadirect{tex.sprint(tostring(luatbls.ex.num[1]*luatbls.ex.num[2]))}
+}
+\Exampletbl{auth={You,Me,Dupree},
+	chaps={intro=very enticing, climax=thrilling, finale=what a twist!}
+	num={12,13}
+}
+\end{LTXexample}
+
+\tblprt{ex}
+
+%\begin{luacode*}
+%  function prt_pyth()
+%  t = pl.tbls.pyth
+%  if not t.a then
+%    pl.tex.pkgerror('must pass a= to \\pyth')
+%  elseif not t.b then
+%    t.b = (tonumber(t.c)^2 -
+%          tonumber(t.a)^2)^0.5
+%  elseif not t.c then
+%    t.c = (tonumber(t.a)^2 +
+%          tonumber(t.b)^2)^0.5
+%  end
+%  local t = pl.tbx.fmt(t,'.'..t.d..'f') -- format table according to d decimals
+%  s = 'Right-angle sides a=$a and b=$b form a hypotenuse of c=$c'
+%  pl.tex.prt(s:fmt(t))
+%  end
+%\end{luacode*}
+%\NewDocumentCommand{\pyth}{m}{%
+%  \tblfrkv{pyth}{#1}[defaults={a=false,b=false,c=false,d=0,e=extras}]
+%  \luadirect{prt_pyth()}%
+%}
+%
+%\pyth{a=3,c=5}\\
+%\pyth{a=3.2,b=4.2,d=2}\\
+%C: \tblget{c}
+%
+%\end{LTXexample}
+
+
+
+
+
+
+
+
+
+
+
+% todo why isnt this working???
+
+
+
+%
+
+%\pyth{} % erro
+
+
+%\begin{luacode*}
+%  pl.tex.wrth(('a,b,c=3'):parsekv('!naked_as_value'), 'dumy')
+%\end{luacode*}
+
+%  \tblfrkv{tbl_def}{kale=cool,paul=gay,craig=fun}
+%  \tblfrkv{tbl}{kale,paul=gay} %[naked_as_value=true]
+%
+%  \tblget{tbl}{kale}%
+%  \tblget{tbl}{paul}%
+%  \tblget{tbl}{craig}%
+%
+%  \tblupd{tbl_def}{tbl}%
+%
+%  \tblfrkvII{tbl}{kale=cool,paul=gay,craig=fun}{kale=weak,paul=sad}
+%  \tblget{tbl}{craig}%
+%  \tblget{tbl}{paul}%
+%  \tblget{tbl}{kale}%
+%
+%  \NewDocumentCommand{\THINg}{ O{} m}{%
+%    \tblfrkvII{setti}{color=red,size=small}{#1} % make settings and update based on [arg=]
+%    {\color{\tblget{setti}{color}}\tblget{setti}{size} #2}
+%  }
+%
+%  \THINg[color=blue,size=tiny]{Kale}
+%
+
+%
+%\begin{luacode*}
+%function prttol()
+%  local dec = penlight.tbls.tol[4] or 1
+%  penlight.wrth(dec,'??')
+%  penlight.tbls.tol[3] =  penlight.tbls.tol[3] or 3
+%  penlight.tbls.tol[4] =  penlight.tbls.tol[1]*(1.0-penlight.tbls.tol[3]/100.0) + 0.0
+%  penlight.tbls.tol[5] =  penlight.tbls.tol[1]*(1.0+penlight.tbls.tol[3]/100.0) + 0.0
+%  --penlight.tbls.tol['k'] = 'fuckboi'
+%  --ttt = pl.tbx.fmt(penlight.tbls.tol, '.3f')
+%  penlight.wrth(('$1\\$2 (\\pmpct{$3} tolerance, $4\\ndash$5\\$2)'):fmt(penlight.tbls.tol, '4=.'..dec..'f, 5=.'..dec..'f'), 'XYZ')
+%end
+%\end{luacode*}
+%\NewDocumentCommand{\prttol}{ m }{\tblfrcsv{tol}{#1}\luadirect{prttol()}}%  {50.0,kV,3,P}   % 50\us (\pmpct{20} tolerance, 40=--60\us), P is optional and precision of the range (number of decimals)
+%
+%\prttol{50,kV,3}
+%
+%\begin{luacode*}
+%  pl.wrth(pl.filterfiles('.',true,'.*%.tex'), 'FF')
+%\end{luacode*}
+
+
+
+
+
+%\begin{luacode*}
+%  pl.tex.wrth(('a,b,c=3'):parsekv('!naked_as_value'), 'dumy')
+%\end{luacode*}
+
+%  \tblfrkv{tbl_def}{kale=cool,paul=gay,craig=fun}
+%  \tblfrkv{tbl}{kale,paul=gay} %[naked_as_value=true]
+%
+%  \tblget{tbl}{kale}%
+%  \tblget{tbl}{paul}%
+%  \tblget{tbl}{craig}%
+%
+%  \tblupd{tbl_def}{tbl}%
+%
+%  \tblfrkvII{tbl}{kale=cool,paul=gay,craig=fun}{kale=weak,paul=sad}
+%  \tblget{tbl}{craig}%
+%  \tblget{tbl}{paul}%
+%  \tblget{tbl}{kale}%
+%
+%  \NewDocumentCommand{\THINg}{ O{} m}{%
+%    \tblfrkvII{setti}{color=red,size=small}{#1} % make settings and update based on [arg=]
+%    {\color{\tblget{setti}{color}}\tblget{setti}{size} #2}
+%  }
+%
+%  \THINg[color=blue,size=tiny]{Kale}
+%
+
+%
+%\begin{luacode*}
+%function prttol()
+%  local dec = penlight.tbls.tol[4] or 1
+%  penlight.wrth(dec,'??')
+%  penlight.tbls.tol[3] =  penlight.tbls.tol[3] or 3
+%  penlight.tbls.tol[4] =  penlight.tbls.tol[1]*(1.0-penlight.tbls.tol[3]/100.0) + 0.0
+%  penlight.tbls.tol[5] =  penlight.tbls.tol[1]*(1.0+penlight.tbls.tol[3]/100.0) + 0.0
+%  --penlight.tbls.tol['k'] = 'fuckboi'
+%  --ttt = pl.tbx.fmt(penlight.tbls.tol, '.3f')
+%  penlight.wrth(('$1\\$2 (\\pmpct{$3} tolerance, $4\\ndash$5\\$2)'):fmt(penlight.tbls.tol, '4=.'..dec..'f, 5=.'..dec..'f'), 'XYZ')
+%end
+%\end{luacode*}
+%\NewDocumentCommand{\prttol}{ m }{\tblfrcsv{tol}{#1}\luadirect{prttol()}}%  {50.0,kV,3,P}   % 50\us (\pmpct{20} tolerance, 40=--60\us), P is optional and precision of the range (number of decimals)
+%
+%\prttol{50,kV,3}
+%
+%\begin{luacode*}
+%  pl.wrth(pl.filterfiles('.',true,'.*%.tex'), 'FF')
+%\end{luacode*}
+
+
+\end{document}

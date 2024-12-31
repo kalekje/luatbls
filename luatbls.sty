@@ -1,0 +1,163 @@
+% Kale Ewasiuk (kalekje@gmail.com)
+% +REVDATE+
+% Copyright (C) 2025 Kale Ewasiuk
+%
+% Permission is hereby granted, free of charge, to any person obtaining a copy
+% of this software and associated documentation files (the "Software"), to deal
+% in the Software without restriction, including without limitation the rights
+% to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+% copies of the Software, and to permit persons to whom the Software is
+% furnished to do so, subject to the following conditions:
+%
+% The above copyright notice and this permission notice shall be included in
+% all copies or substantial portions of the Software.
+%
+% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+% ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+% TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+% PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT
+% SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+% ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+% ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+% OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+% OR OTHER DEALINGS IN THE SOFTWARE.
+
+\RequirePackage{luacode}
+\RequirePackage{luakeys}
+\RequirePackage{penlightplus}
+
+
+\luadirect{luatbls = require'luatbls'}
+
+
+\NewDocumentCommand{\tblnew}{m}{\luadirect{% initialize a tbl and set empty
+  luatbls[\luastring{#1}] = {}
+  luatbls._rec_tbl = \luastring{#1}
+}}
+
+
+\NewDocumentCommand{\tblchg}{ m }{\luadirect{% change recent table
+  luatbls._rec_tbl = luatbls._get_tbl_name(\luastring{#1})
+}}
+
+\NewDocumentCommand{\tblfrkv}{m +m O{}}{\luadirect{% parse a tbl from key-vals, naked are set to boolean
+  luatbls._rec_tbl_opts = luatbls._luakeys.parse(\luastring{#3})
+  luatbls[\luastring{#1}] = luatbls._luakeys.parse(string.subpar(\luastring{#2}), luatbls._rec_tbl_opts)
+  luatbls._rec_tbl = \luastring{#1}
+}}
+
+\NewDocumentCommand{\tblfrkvN}{m +m O{}}{\luadirect{%
+  luatbls._rec_tbl_opts = luatbls._luakeys.parse(\luastring{#3})
+  luatbls[\luastring{#1}] = luatbls._luakeys.parse(string.subpar(\luastringN{#2}), luatbls._rec_tbl_opts)
+  luatbls._rec_tbl = \luastring{#1}
+}}
+
+\NewDocumentCommand{\tblfrcsv}{m +m O{}}{\tblfrkv{#1}{#2}[naked_as_value=true,#3]}% naked are set to array
+
+\NewDocumentCommand{\tblfrcsvN}{m +m O{}}{\tblfrkvN{#1}{#2}[naked_as_value=true,#3]}
+
+\NewDocumentCommand{\tblkvundefcheck}{}{\luadirect{luatbls._check_recent_tbl_undefault()}}% check defaults list and throw error if foreign keys were used
+
+
+
+\NewDocumentCommand{\tblapp}{m m}{\luadirect{% append to a table (ie using integer index)  with a value (second arg)
+  __tbl__ = luatbls._get_tbl_name(\luastring{#1})
+  table.insert(luatbls[__tbl__], \luastring{#2})
+}}
+
+
+\NewDocumentCommand{\tblappN}{m m}{\luadirect{% append to a table (ie using integer index)  with a value (second arg) #
+  __tbl__ = luatbls._get_tbl_name(\luastring{#1})
+  table.insert(luatbls[__tbl__], \luastringN{#2})
+}}
+
+
+\NewDocumentCommand{\tblcon}{m m}{\luadirect{% concatenate to a table (ie using integer index)  with a  list of comma separated values (second arg) #
+  __tbl__ = luatbls._get_tbl_name(\luastring{#1})
+  for k, v in ipairs(luatbls._luakeys.parse(string.subpar(\luastring{#2}), {naked_as_value=true})) do
+    table.insert(luatbls[__tbl__], v)
+  end
+}}
+
+
+\NewDocumentCommand{\tblconN}{m m}{\luadirect{% concatenate to a table (ie using integer index)  with a  list of comma separated values (second arg) #
+  __tbl__ = luatbls._get_tbl_name(\luastring{#1})
+  for k, v in ipairs(luatbls._luakeys.parse(string.subpar(\luastringN{#2}), {naked_as_value=true})) do
+    table.insert(luatbls[__tbl__], v)
+  end
+}}
+
+
+\NewDocumentCommand{\tbladd}{m m}{\luadirect{% add a kv pair to a table
+  __tbl__, __key__ = luatbls._get_tbl_index(\luastring{#1}, true)
+  luatbls[__tbl__][__key__] = \luastring{#2}
+}}
+
+\NewDocumentCommand{\tbladdN}{m m}{\luadirect{% add a kv pair to a table
+  __tbl__, __key__ = luatbls._get_tbl_index(\luastring{#1}, true)
+  luatbls[__tbl__][__key__] = \luastringN{#2}
+}}
+
+
+\NewDocumentCommand{\tblupd}{m m}{\luadirect{% update to a table (ie using integer index)  with a  list of comma separated values (second arg) #
+  __tbl__ = luatbls._get_tbl_name(\luastring{#1})
+  __tbl_new__ = luatbls._luakeys.parse(string.subpar(\luastring{#2})
+  penlight.tablex.update(luatbls[__tbl__], __tbl_new__)
+}}
+
+
+\NewDocumentCommand{\tblupdN}{m m}{\luadirect{% update to a table (ie using integer index)  with a  list of comma separated values (second arg) #
+  __tbl__ = luatbls._get_tbl_name(\luastring{#1})
+  __tbl_new__ = luatbls._luakeys.parse(string.subpar(\luastringN{#2})
+  penlight.tablex.update(luatbls[__tbl__], __tbl_new__)
+}}
+
+
+
+
+\NewDocumentCommand{\tblget}{m}{\luadirect{% get an item using i syntax
+  luatbls._get_tbl_item(\luastring{#1}, true)
+}}
+
+\NewDocumentCommand{\tblgetE}{m}{\luadirect{% get an item explicitly
+  tex.sprint(tostring(luatbls.#1))
+}}
+
+\NewDocumentCommand{\tblset}{m m}{\luadirect{% set item with {value}
+  luatbls._set_tbl_item(\luastring{#1}, \luastring{#2})
+}}
+
+\NewDocumentCommand{\tblsetN}{m m}{\luadirect{% set item with {value}
+  luatbls._set_tbl_item(\luastring{#1}, \luastringN{#2})
+}}
+
+
+\NewDocumentCommand{\tblif}{ m m O{}}{\ifluax{luatbls._get_tbl_item(\luastring{#1})}{#2}[#3]}
+
+\NewDocumentCommand{\tblifv}{m m O{}}{\ifluaxv{luatbls._get_tbl_item(\luastring{#1})}{#2}[#3]}
+
+\NewDocumentCommand{\tblifeq}{m m m O{}}{\ifluax{luatbls._get_tbl_item(\luastring{#1}) == #2}{#3}[#4]}
+
+
+\NewDocumentCommand{\tblfor}{  m m }{\luadirect{luatbls._for_tbl(\luastring{#1}, \luastring{#2})}}
+\NewDocumentCommand{\tblforN}{ m m }{\luadirect{luatbls._for_tbl(\luastring{#1}, \luastringN{#2})}}
+
+\NewDocumentCommand{\tblforE}{  m m }{\luadirect{luatbls._for_tbl_e(luatbls.#1, \luastring{#2})}}
+\NewDocumentCommand{\tblforEN}{ m m }{\luadirect{luatbls._for_tbl_e(luatbls.#1, \luastringN{#2})}}
+
+
+\NewDocumentCommand{\tbldef}{  m m }{\luadirect{luatbls._def_tbl(\luastring{#1}, \luastring{#2})}}
+\NewDocumentCommand{\tblgdef}{ m m }{\luadirect{luatbls._def_tbl(\luastring{#1}, \luastring{#2}, 'global')}}
+
+\NewDocumentCommand{\tbldefs}{ m O{} }{\luadirect{luatbls._def_tbl_some(\luastring{#1}, \luastring{#2})}}
+\NewDocumentCommand{\tblgdefs}{ m  O{} }{\luadirect{luatbls._def_tbl_some(\luastring{#1},  \luastring{#2}, 'global')}}
+
+\NewDocumentCommand{\tbldefxy}{ m O{} }{\luadirect{luatbls._def_tbl_coords(\luastring{#1}, \luastring{#2})}}% define #2x and #2y from a space delimited x-y pair
+
+\NewDocumentCommand{\tblapply}{m m O{}}{\luadirect{luatbls._apply_tbl(\luastring{#1}, \luastring{#2}, \luastring{#3})}}
+
+\NewDocumentCommand{\tblprt}{s m}{%
+  \luadirect{penlight.wrth(luatbls._get_tbl(\luastring{#2}),'luatbls: '..\luastring{#2})}%
+  \IfBooleanTF{#1}{\PackageError{luatbls}{Program terminated by tblprt*}{}\stop}{}%
+}
+

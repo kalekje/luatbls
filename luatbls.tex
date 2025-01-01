@@ -150,14 +150,14 @@ and use a key that was not specified in the luakeys parse options via \cmd{opts.
 The validity of table names and keys are not checked.\\
 
 \begin{LTXexample}
-\tblfrkv{my}{a,b,c,first=john,last=smith}%
+\tblfrkv{ex}{a,b,c,first=john,last=smith}%
 	[defaults={x=0,1=one,n=false,y=yes}]
-\tblget{my.a}\\
+\tblget{ex.a}\\
 \tblset{a}{tRuE!!}
 \tblget{a}\\
-\tblget{my.x}\\
+\tblget{ex.x}\\
 \tblget{.x}\\
-\tbladd{my.newkey}{val}\tblget{newkey}\\
+\tbladd{ex.newkey}{val}\tblget{newkey}\\
 \tbladd{nk}{VAL}\tblget{nk}\\
 \end{LTXexample}
 
@@ -307,65 +307,6 @@ Note that luakeys parses the args, so quotes are not needed around strings for t
 \cmd{\tblprt{t}} pretty-print the table in console. Using \cmd{\tblprt*{}} will terminate the LaTeX program immediately after and issue an error, which could be useful for debugging.
 
 
-%\begin{luacode*}
-%	for t, k, v in luatbls._iter_tbls_vals('my|*,:') do
-%	--for t, k, v in luatbls._iter_tbls_vals('my/1') do
-%		penlight.wrth({t,k,v})
-%	end
-%\end{luacode*}
-
-
-
-
-
-
-
-
-
-
-%
-%
-%\begin{LTXexample}
-%%% \kvtblundefcheck % would throw error
-%\tbldef{my.first}{mydef} \mydef\\
-%\tbldef{first}{}\dtblmyfirst\\
-%{\tbldef{last}{mydef} \mydef} \mydef\\
-%{\tblgdef{last}{mydef}} \mydef\\
-%
-%\tbldefall{}{}\dtblmyfirst\\
-%\tbldefall{my}{DEF}\DEFfirst
-%
-%\tblset{my.a}{12 36}
-%\tbldefxy{my.a}{coord} (\coordx,\coordy)
-%\tbldefxy{my.a}{} (\dtblmyax,\dtblmyay)
-%\tbldefxy{a}{} (\dtblmyax,\dtblmyay)
-%\end{LTXexample}
-%
-%\begin{LTXexample}
-%\tblfrcsv{me}{a,b,"c,see",d,e}
-%\tblget{me/1},\tblget{2}\\
-%\tblget{3}\\
-%\tblset{me/4}{D}\tblget{me/4}\tblget{/4}\\
-%\tblset{5}{E}\tblget{5}\\
-%\tblget{-2},\tblget{me/-1}\\
-%\tblget{/-3}\\
-%%% \tblget{k} % would throw error
-%
-%\tblfrkv{a=A,b=B,d=D}[defaults={a,b,c,d}]
-%%\dtblMa \dtblMb \dtblMc \dtblMd  # todo fix!
-%
-%\end{LTXexample}
-
-
-
-%\tblfrcsv{me}{
-%Hello=world,
-%
-%Bonjour=terre,
-%}
-%\tblget{Hello}
-%\tblget{Bonjour}
-
 
 \luadirect{luatbls._debug = true}
 
@@ -392,6 +333,18 @@ Note that luakeys parses the args, so quotes are not needed around strings for t
 \end{LTXexample}
 
 \tblprt{ex}
+
+
+
+
+
+
+\end{document}
+
+
+
+
+
 
 %\begin{luacode*}
 %  function prt_pyth()
@@ -421,49 +374,6 @@ Note that luakeys parses the args, so quotes are not needed around strings for t
 %
 %\end{LTXexample}
 
-
-
-
-
-
-
-
-
-
-
-% todo why isnt this working???
-
-
-
-%
-
-%\pyth{} % erro
-
-
-%\begin{luacode*}
-%  pl.tex.wrth(('a,b,c=3'):parsekv('!naked_as_value'), 'dumy')
-%\end{luacode*}
-
-%  \tblfrkv{tbl_def}{kale=cool,paul=gay,craig=fun}
-%  \tblfrkv{tbl}{kale,paul=gay} %[naked_as_value=true]
-%
-%  \tblget{tbl}{kale}%
-%  \tblget{tbl}{paul}%
-%  \tblget{tbl}{craig}%
-%
-%  \tblupd{tbl_def}{tbl}%
-%
-%  \tblfrkvII{tbl}{kale=cool,paul=gay,craig=fun}{kale=weak,paul=sad}
-%  \tblget{tbl}{craig}%
-%  \tblget{tbl}{paul}%
-%  \tblget{tbl}{kale}%
-%
-%  \NewDocumentCommand{\THINg}{ O{} m}{%
-%    \tblfrkvII{setti}{color=red,size=small}{#1} % make settings and update based on [arg=]
-%    {\color{\tblget{setti}{color}}\tblget{setti}{size} #2}
-%  }
-%
-%  \THINg[color=blue,size=tiny]{Kale}
 %
 
 %
@@ -490,53 +400,11 @@ Note that luakeys parses the args, so quotes are not needed around strings for t
 
 
 
-
 %\begin{luacode*}
-%  pl.tex.wrth(('a,b,c=3'):parsekv('!naked_as_value'), 'dumy')
-%\end{luacode*}
-
-%  \tblfrkv{tbl_def}{kale=cool,paul=gay,craig=fun}
-%  \tblfrkv{tbl}{kale,paul=gay} %[naked_as_value=true]
-%
-%  \tblget{tbl}{kale}%
-%  \tblget{tbl}{paul}%
-%  \tblget{tbl}{craig}%
-%
-%  \tblupd{tbl_def}{tbl}%
-%
-%  \tblfrkvII{tbl}{kale=cool,paul=gay,craig=fun}{kale=weak,paul=sad}
-%  \tblget{tbl}{craig}%
-%  \tblget{tbl}{paul}%
-%  \tblget{tbl}{kale}%
-%
-%  \NewDocumentCommand{\THINg}{ O{} m}{%
-%    \tblfrkvII{setti}{color=red,size=small}{#1} % make settings and update based on [arg=]
-%    {\color{\tblget{setti}{color}}\tblget{setti}{size} #2}
-%  }
-%
-%  \THINg[color=blue,size=tiny]{Kale}
-%
-
-%
-%\begin{luacode*}
-%function prttol()
-%  local dec = penlight.tbls.tol[4] or 1
-%  penlight.wrth(dec,'??')
-%  penlight.tbls.tol[3] =  penlight.tbls.tol[3] or 3
-%  penlight.tbls.tol[4] =  penlight.tbls.tol[1]*(1.0-penlight.tbls.tol[3]/100.0) + 0.0
-%  penlight.tbls.tol[5] =  penlight.tbls.tol[1]*(1.0+penlight.tbls.tol[3]/100.0) + 0.0
-%  --penlight.tbls.tol['k'] = 'fuckboi'
-%  --ttt = pl.tbx.fmt(penlight.tbls.tol, '.3f')
-%  penlight.wrth(('$1\\$2 (\\pmpct{$3} tolerance, $4\\ndash$5\\$2)'):fmt(penlight.tbls.tol, '4=.'..dec..'f, 5=.'..dec..'f'), 'XYZ')
-%end
-%\end{luacode*}
-%\NewDocumentCommand{\prttol}{ m }{\tblfrcsv{tol}{#1}\luadirect{prttol()}}%  {50.0,kV,3,P}   % 50\us (\pmpct{20} tolerance, 40=--60\us), P is optional and precision of the range (number of decimals)
-%
-%\prttol{50,kV,3}
-%
-%\begin{luacode*}
-%  pl.wrth(pl.filterfiles('.',true,'.*%.tex'), 'FF')
+%	for t, k, v in luatbls._iter_tbls_vals('my|*,:') do
+%	--for t, k, v in luatbls._iter_tbls_vals('my/1') do
+%		penlight.wrth({t,k,v})
+%	end
 %\end{luacode*}
 
 
-\end{document}

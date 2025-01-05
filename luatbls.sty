@@ -131,6 +131,8 @@
   luatbls._set_tbl_item(\luastring{#1}, \luastringN{#2})
 }}
 
+\NewDocumentCommand{\tblsetE}{m m}{\luadirect{luatbls.#1 = #2}}% set item with {value}
+
 
 \NewDocumentCommand{\tblif}{ m m O{}}{\ifluax{luatbls._get_tbl_item(\luastring{#1})}{#2}[#3]}
 
@@ -146,13 +148,32 @@
 \NewDocumentCommand{\tblforEN}{ m m }{\luadirect{luatbls._for_tbl_e(luatbls.#1, \luastringN{#2})}}
 
 
-\NewDocumentCommand{\tbldef}{  m m }{\luadirect{luatbls._def_tbl(\luastring{#1}, \luastring{#2})}}
-\NewDocumentCommand{\tblgdef}{ m m }{\luadirect{luatbls._def_tbl(\luastring{#1}, \luastring{#2}, 'global')}}
+\NewDocumentCommand{\tbldef}{  m o }{\luadirect{luatbls._def_tbl(\luastring{#1}, \luastring{#2})}}
+\NewDocumentCommand{\tblgdef}{ m o }{\luadirect{luatbls._def_tbl(\luastring{#1}, \luastring{#2}, 'global')}}
 
-\NewDocumentCommand{\tbldefs}{ m O{} }{\luadirect{luatbls._def_tbl_some(\luastring{#1}, \luastring{#2})}}
-\NewDocumentCommand{\tblgdefs}{ m  O{} }{\luadirect{luatbls._def_tbl_some(\luastring{#1},  \luastring{#2}, 'global')}}
+\NewDocumentCommand{\tbldefs}{ m o }{\luadirect{luatbls._def_tbl_some(\luastring{#1}, \luastring{#2})}}
+\NewDocumentCommand{\tblgdefs}{ m  o }{\luadirect{luatbls._def_tbl_some(\luastring{#1},  \luastring{#2}, 'global')}}
 
-\NewDocumentCommand{\tbldefxy}{ m O{} }{\luadirect{luatbls._def_tbl_coords(\luastring{#1}, \luastring{#2})}}% define #2x and #2y from a space delimited x-y pair
+
+
+\ProvideDocumentCommand{\providenewlength}{ m }{\ifdeflength{#1}{}{\newlength{#1}}}
+
+
+\NewDocumentCommand{\tblmaketoggle}{ m o }{\luadirect{luatbls._make_toggle_tbl(\luastring{#1}, \luastring{#2})}}
+\NewDocumentCommand{\tblmakegtoggle}{ m o }{\luadirect{luatbls._make_toggle_tbl(\luastring{#1}, \luastring{#2}, '\\global')}}
+
+\NewDocumentCommand{\tblmaketoggles}{ m o }{\luadirect{luatbls._make_toggles_tbl(\luastring{#1}, \luastring{#2})}}
+\NewDocumentCommand{\tblmakegtoggles}{ m o }{\luadirect{luatbls._make_toggles_tbl(\luastring{#1}, \luastring{#2}, '\\global')}}
+
+
+\NewDocumentCommand{\tblmakelength}{ m o }{\luadirect{luatbls._make_length_tbl(\luastring{#1}, \luastring{#2})}}
+\NewDocumentCommand{\tblmakeglength}{ m o }{\luadirect{luatbls._make_length_tbl(\luastring{#1}, \luastring{#2}, '\\global')}}
+
+\NewDocumentCommand{\tblmakelengths}{ m o }{\luadirect{luatbls._make_lengths_tbl(\luastring{#1}, \luastring{#2})}}
+\NewDocumentCommand{\tblmakeglengths}{ m o }{\luadirect{luatbls._make_lengths_tbl(\luastring{#1}, \luastring{#2}, '\\global')}}
+
+
+\NewDocumentCommand{\tbldefxy}{ m o }{\luadirect{luatbls._def_tbl_coords(\luastring{#1}, \luastring{#2})}}% define #2x and #2y from a space delimited x-y pair
 
 \NewDocumentCommand{\tblapply}{m m O{}}{\luadirect{luatbls._apply_tbl(\luastring{#1}, \luastring{#2}, \luastring{#3})}}
 

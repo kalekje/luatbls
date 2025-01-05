@@ -64,6 +64,8 @@
 \begin{document}
 %
 
+%TODO: need options in updating tables or csv
+
 \maketitle
 
 
@@ -91,7 +93,9 @@ In this documentation, arguments are represented as follows:\\
 \llcmd{i }: the flexible indexer to get a single item.\\
 \llcmd{I }: the flexible indexer to get a single or multiple items.\\
 \llcmd{keyval }: a key-value string for the table. Standalone values are set to boolean.\\
-\llcmd{csv }: a key-value string where standalone values are parsed as array-like.
+\llcmd{csv }: a key-value string where standalone values are parsed as array-like.\\
+\llcmd{opts }: options for \cmd{luakeys.parse()}.\\
+\llcmd{cstemp }: a template for command-sequences, lengths, or toggles. By default is \cmd{ltbl<t><k>}.\\
 
 There are a few ways to use the index (placeholder \cmd{i}.\\
 \cmd{t.k} where \cmd{t} is the table name and \cmd{k} is a string key (i.e. uses \cmd{luatbls.t.k}),\\
@@ -101,14 +105,21 @@ where the assumed table is the last one that was created or changed to (i.e. the
 In this case, passing a number will assume an integer index.
 
 To use a \cmd{I},
-you can explicitly select tables and groups of keys by \cmd{t|seq}, or \cmd{t.k}, or \cmd{t/n}.
+you can select tables and groups of keys by \cmd{t|seq}, or \cmd{t.k}, or \cmd{t/n}.
 If no \cmd{|./} is provided, the recent table is used and the argument is assumed to be a sequence of keys.
 \cmd{penlightplus}'s command \cmd{penlight.seq.tbltrain()} syntax is used for \cmd{seq}uences.
 To summarize what \cmd{seq} can be, a comma-separated list of numbers or keys are used to specify which elements are iterated over.
 NumPy-like slicing is possibly with \cmd{:} to choose integer ranges.
 If \cmd{*} is provided,
 all string keys are iterated.
-If \cmd{I} is entirely blank, all elements of the recent table are used, which is equivalent to \cmd{t|*,:}.\\
+If \cmd{I} is entirely blank, all elements of the recent table are used, which is equivalent to \cmd{t|*,:}.
+
+
+The \cmd{cstemp} default can be changed with: \cmd{\luadirect{luatbls._cstemp = 'ltbl<t><k>'}},
+where \cmd{<t>} and \cmd{<k>} are the table and key names. Numerical keys are converted to capital letters: 1->A, 2->B.
+It is recommended that tables and keys contain letters only for predictable behaviour when using this feature.
+If the value of a tbl's key is a table, every element in that table is defined, and the keys of that nested table is
+appended to the cs: \cmd{ltbl<t><k1><k2>} (noting that numbers are converted to letters).
 
 Note: nested tables are currently not fully supported. Some variations of commands have an \cmd{E} suffix which indicates
 that nested elements can be explicitly indexed.
@@ -117,7 +128,6 @@ The table name must be specified, and the validity of table names and keys are n
 The \cmd{tbl} commands fully expand the
 \cmd{t}, \cmd{k}, \cmd{n}, \cmd{i}, and \cmd{I} arguments. However a variation with an \cmd{N}-appended is usually provided
 which will not expand the \cmd{v}, \cmd{keyval}, or \cmd{csv} args.
-
 
 
 %%%
@@ -149,6 +159,9 @@ and use a key that was not specified in the luakeys parse options via \cmd{opts.
 \cmd{\tblgetE{t.k}} An 'explicit' version of tbl get. Use this for nested tables. The tbl name must be specified.
 The validity of table names and keys are not checked.\\
 
+\cmd{\tblsetE{i}{v}} the explicit version of \cmd{\tblset}. Quotes must be used for strings in the \cmd{v}, and arbitrary lua code can be entered.\\
+
+
 \begin{LTXexample}
 \tblfrkv{ex}{a,b,c,first=john,last=smith}%
 	[defaults={x=0,1=one,n=false,y=yes}]
@@ -159,11 +172,14 @@ The validity of table names and keys are not checked.\\
 \tblget{.x}\\
 \tbladd{ex.newkey}{val}\tblget{newkey}\\
 \tbladd{nk}{VAL}\tblget{nk}\\
+\tblsetE{ex.d}{math.mod2(3)}
+\tblget{d}
 \end{LTXexample}
 
 \begin{LTXexample}
 \tblfrcsv{EX}{x={1,2,{1,2,3}},name=me}
 \tblgetE{EX.x[1]}\\
+\tblsetE{EX.x[3][3]}{99}\\
 \tblgetE{EX.x[3][3]}\\
 \tblgetE{EX.name}\\
 \end{LTXexample}
@@ -206,10 +222,10 @@ The validity of table names and keys are not checked.\\
 
 \cmd{\tblfor{I}{template}} and \cmd{\tblforN} By default, iterates over all elements (\cmd{seq = *,:}),
 but arbitrary indices/keys can be iterated over as per \cmd{penlight.seq.tbltrain} syntax.
-\cmd{<k>} and \cmd{<v>} are placeholders in the template that are replaced by the keys and vals and can be changed by:
+\cmd{<k>} and \cmd{<v>} are placeholders in the template that are replaced by the keys and vals and can be changed by:\\
 \cmd{\luadirect{luatbls._tblv = '<v>'}}
 
-If you want to iterate over a second-level tabel, you must use:\\
+If you want to iterate over a second-level table, you must use:\\
 \cmd{\tblforE} and \cmd{\tblforEN}, and explicitly provide the table and element.
 
 \begin{LTXexample}
@@ -227,41 +243,63 @@ If you want to iterate over a second-level tabel, you must use:\\
 
 
 \subsection*{Definitions}
-\cmd{\tbldef{i}[cs]} pushes the value to macro \cmd{\cs}. If cs is not provided, a default cs name of \cmd{dtbl<t><k>} is used.\\
-\cmd{\tblgdef{i}[cs]} like above but global definition is used.\\
+\cmd{\tbldef{i}[cstemp]} pushes the value to macro \cmd{cstemp}.\\
+\cmd{\tblgdef{i}[cstemp]} like above but global definition is used.\\
 
-\cmd{\tbldefs{I}[cspfx]} and \cmd{\tblgdefs{I}[cspfx]} defines items in table \cmd{t} (use recent if blank) with format \cmd{<cspfx><key>} where \cmd{cspfx} is a command sequence prefix.
-If \cmd{cspfx} is blank, keys will be defined as \cmd{dtbl<t><k>}.
-The default \cmd{cspfx} is changed by:\\\cmd{\luadirect{luatbls._cspfx = 'dtbl'}}\\
-Numerical keys are converted to capital letters: 1->A, 2->B.
-It is recommended that tables and keys contain letters only for predictable behaviour when using this feature.\\
-If the value of a tbl's key is a table, every element in that table is defined, and the keys of that nested table is
-appended to the cs: \cmd{dtbl<t><k1><k2>} (noting that numbers are converted to letters).\\
+\cmd{\tbldefs{I}[cstemp]} and \cmd{\tblgdefs{I}[cstemp]} defines items in table \cmd{t} (use recent if blank).
 
+%\newlength{\tesst}
+%\setlength{\tesst}{ 1 cm }
 
 \begin{LTXexample}
 \tblfrcsv{EX}{n1,kA=v1,n2,n3,n4,
 	     kB=v2,kC=v3,n5,n6}
-1>\tbldef{kA}{mycs}\mycs\tbldef{kA}{}\dtblEXkA\\
-2> \tbldef{EX/1}{}\dtblEXA
+1>\tbldef{kA}[mycs]\mycs\tbldef{kA}\ltblEXkA\\
+2> \tbldef{EX/1}\ltblEXA
 \end{LTXexample}
 
 \begin{LTXexample}
 \tblfrcsv{EX}{x={1,2,3}}
-1>\tbldef{x}{mycs}\mycsA, \mycsB \\
-2>\tbldefs{}\dtblEXxA, \dtblEXxB
+1>\tbldef{x}[mycs]\mycsA, \mycsB \\
+2>\tbldefs{}\ltblEXxA, \ltblEXxB
 \end{LTXexample}
 
 
 
-\cmd{\tbldefxy{i}[cspfx]} splits the value of item by space, and creates two definitions \cmd{<cspfx>x} and \cmd{<cspfx>y}.
+\cmd{\tbldefxy{i}[cstemp]} splits the value of item by space, and creates two definitions \cmd{<cstemp>x} and \cmd{<cstemp>y}.
 This might be useful for passing and using tikz coordinates, for example \cmd{xy=0 5}. An error is thrown if the values
 are non-numeric.\\
 
 \begin{LTXexample}[width=0.5\linewidth]
 \tblfrkv{EX}{coords=12 34,other}
 \tbldefxy{coords}[d]\dx, \dy \\
-\tbldefxy{coords}\dtblEXcoordsx, \dtblEXcoordsy \\
+\tbldefxy{coords}\ltblEXcoordsx, \ltblEXcoordsy \\
+\end{LTXexample}
+
+\cmd{\tblmaketoggle{i}[cstemp]} will create and set a toggle (see etoolbox) for a truth-y value (see \cmd{pl.hasval})\\
+\cmd{\tblmaketoggles{I}[cstemp]} will iterate over I and create and set global toggles (see etoolbox) for boolean values\\
+
+\begin{LTXexample}
+	\tblfrkv{ex}{atog=true,!btog}
+	\tblmakegtoggles{}
+	\iftoggle{ltblexatog}{True}{}\\
+	\iftoggle{ltblexbtog}{}{False}\\
+\end{LTXexample}
+
+
+\cmd{\tblmakelength{i}[cstemp]} will 'forcefully' create a length for an element. Glue expressions are permitted. See
+etoolbox's \cmd{\deflength{}}\\
+\cmd{\tblmakelengths{I}[cstemp]} will iterate over I and create global lengths for elements that are tex dimensions. If
+plain numbers are found, \cmd{sp} units are used (in case the \cmd{convert_dimensions=true} luakeys option is used, which converts to sp)\\
+
+
+\begin{LTXexample}
+	\tblfrkv{ex}{alen=1cm,blen=2cm,clen=10mm*2+2cm}[convert_dimensions]
+	\tblmakelengths{}[<k>]
+	I\hspace{\alen}I\\
+	I\hspace{\blen}I\\
+	\tblmakelength{clen}[LEN]
+	I\hspace{\LEN}I
 \end{LTXexample}
 
 
@@ -295,11 +333,6 @@ Note that luakeys parses the args, so quotes are not needed around strings for t
 3> \tblget{new/1}
 \end{LTXexample}
 
-%\begin{luacode*}
-% penlight.wrth(penlight.tablex.list2comma({'a','b','c'}),'XYZ')
-%\end{luacode*}
-
-%\tblprt*{ex}
 
 
 
@@ -307,6 +340,8 @@ Note that luakeys parses the args, so quotes are not needed around strings for t
 \cmd{\tblprt{t}} pretty-print the table in console. Using \cmd{\tblprt*{}} will terminate the LaTeX program immediately after and issue an error, which could be useful for debugging.
 
 
+
+\clearpage
 
 \luadirect{luatbls._debug = true}
 

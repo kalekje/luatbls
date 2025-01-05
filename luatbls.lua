@@ -33,7 +33,7 @@ luatbls._rec_tbl_opts = {}
 luatbls._xysep = '%s+' -- spaces separate x-y coordinates
 luatbls._tblv = '<v>'
 luatbls._tblk = '<k>'
-luatbls._cspfx = 'dtbl'
+luatbls._cstemp = 'ltbl<t><k>'
 luatbls._debug = false
 
 function luatbls._dprint(s1, s2)
@@ -157,26 +157,33 @@ function luatbls._make_alpha_key(k)
     return k
 end
 
+function luatbls._make_def_name(t, k, temp)
+    if temp == penlight.tex.xNoValue then
+        temp = luatbls._cstemp
+    end
+    k = luatbls._make_alpha_key(k)
+    return temp:gsub('<t>',t):gsub('<k>',k)
+end
+
 function luatbls._def_tbl(ind, def, g)
   local _tbl, _key = luatbls._get_tbl_index(ind)
-   if def == '' then def = luatbls._cspfx.._tbl..luatbls._make_alpha_key(_key) end
-  luatbls._def_tbl_one(luatbls[_tbl][_key], def, g)
+    def = luatbls._make_def_name(_tbl, _key, def)
+    luatbls._def_tbl_one(luatbls[_tbl][_key], def, g)
 end
 
 
-function luatbls._def_tbl_some(tblseq, def, g)
-  for t, k, v in luatbls._iter_tbls_vals(tblseq) do
-      if def == '' then def = luatbls._cspfx..t end
-      local def2 = def .. luatbls._make_alpha_key(k)
-         luatbls._def_tbl_one(v, def2, g)
+function luatbls._def_tbl_some(Ind, def, g)
+  for t, k, v in luatbls._iter_tbls_vals(Ind) do
+        local newdef = luatbls._make_def_name(t, k, def)
+         luatbls._def_tbl_one(v, newdef, g)
      end
 end
+
 
 function luatbls._def_tbl_one(v, cs, g)
     if type(v) == 'table' then
         for kk, vv in pairs(v) do
-            kk = luatbls._make_alpha_key(kk)
-            token.set_macro(cs..kk, tostring(vv), g)
+            token.set_macro(cs..luatbls._make_alpha_key(kk), tostring(vv), g)
         end
     else
         token.set_macro(cs, tostring(v), g)
@@ -186,7 +193,7 @@ end
 function luatbls._def_tbl_coords(ind, def)
     local tbl, key = luatbls._get_tbl_index(ind)
     local str = luatbls[tbl][key]
-    if def == '' then def = luatbls._cspfx..tbl..key end
+    def = luatbls._make_def_name(tbl, key, def)
     local x, y = str:strip():splitv(luatbls._xysep)
      if (not penlight.hasval(x)) or (not penlight.hasval(y))  then
        penlight.tex.pkgerror('luatbls', '_def_tbl_coords function could not parse coordiantes given as "'..str..'" ensure two numbers separated by space are given!', '', true)
@@ -196,14 +203,70 @@ function luatbls._def_tbl_coords(ind, def)
 end
 
 
+
+function luatbls._make_one_toggle(def, v, g)
+    tex.sprint(g..'\\providetoggle{'..def..'}')
+    tex.sprint(g..'\\toggle'..tostring(v)..'{'..def..'}')
+end
+
+function luatbls._make_toggle_tbl(ind, def, g)
+    g = g or ''
+    local t, k = luatbls._get_tbl_index(ind)
+    local v = luatbls[t][k]
+    def = luatbls._make_def_name(t, k, def)
+    luatbls._make_one_toggle(def, penlight.hasval(v), g)
+end
+
+function luatbls._make_toggles_tbl(Ind, def, g)
+    g = g or ''
+    for t, k, v in luatbls._iter_tbls_vals(Ind) do
+        if type(v) == 'boolean' then
+            local newdef = luatbls._make_def_name(t, k, def)
+            luatbls._make_one_toggle(newdef, v, g)
+        end
+    end
+end
+
+
+function luatbls._make_one_length(def, v, g)
+    tex.sprint(g..'\\providenewlength{\\'..def..'}')
+    tex.sprint(g..'\\deflength{\\'..def..'}{'..v..'}')
+end
+
+function luatbls._make_length_tbl(ind, def, g)
+    g = g or ''
+    local t, k = luatbls._get_tbl_index(ind)
+    local v = luatbls[t][k]
+    if type(v) == 'number' then
+        v = tostring(v)..'sp'
+    end
+    local def = luatbls._make_def_name(t, k, def)
+    luatbls._make_one_length(def, v, g)
+end
+
+function luatbls._make_lengths_tbl(Ind, def, g)
+    g = g or ''
+    for t, k, v in luatbls._iter_tbls_vals(Ind) do
+        if type(v) == 'number' then
+            v = tostring(v)..'sp'
+        end
+        if v:istexdim() then
+            local newdef = luatbls._make_def_name(t, k, def)
+            luatbls._make_one_length(newdef, v, g)
+        end
+    end
+end
+
+
+
 function luatbls._for_tbl_prt(k, v,cmd)
     local cmd_new = cmd:gsub(luatbls._tblv, tostring(v)):gsub(luatbls._tblk, tostring(k)):gsub('(\\%w+) ', '%1') -- for some reason a space gets added to \cs, maybe
     luatbls._dprint(cmd_new, '_for_tbl replacement')
     tex.sprint(cmd_new)
 end
 
-function luatbls._for_tbl(tblseq, cmd)
-  for t, k, v in luatbls._iter_tbls_vals(tblseq) do
+function luatbls._for_tbl(Ind, cmd)
+  for t, k, v in luatbls._iter_tbls_vals(Ind) do
         luatbls._for_tbl_prt(k, v,cmd)
   end
 end

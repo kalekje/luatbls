@@ -23,7 +23,9 @@
 % OR OTHER DEALINGS IN THE SOFTWARE.
 
 
+
 \documentclass[11pt,parskip=half]{scrartcl}
+\usepackage[default]{lato}
 \usepackage[left=0.75in,right=0.75in,top=1in,bottom=1in]{geometry}
 \setlength{\parindent}{0ex}
 \newcommand{\llcmd}[1]{\leavevmode\llap{\texttt{\detokenize{#1}}}}
@@ -97,7 +99,7 @@ In this documentation, arguments are represented as follows:\\
 \llcmd{opts }: options for \cmd{luakeys.parse()}.\\
 \llcmd{cstemp }: a template for command-sequences, lengths, or toggles. By default is \cmd{ltbl<t><k>}.\\
 
-There are a few ways to use the index (placeholder \cmd{i}.\\
+There are a few ways to use the index (placeholder \cmd{i}).\\
 \cmd{t.k} where \cmd{t} is the table name and \cmd{k} is a string key (i.e. uses \cmd{luatbls.t.k}),\\
 \cmd{t/n} where \cmd{n} is an integer index (i.e. uses \cmd{t.k[n]}); note that negative indexes are allowed where -1 is the last element.
 Alternatively, \cmd{t} and the symbol can be omitted, and simply pass the element without the table name as a prefix,
@@ -140,13 +142,16 @@ which will not expand the \cmd{v}, \cmd{keyval}, or \cmd{csv} args.
 \cmd{\tblchg{t}} changes the 'recent' table\\
 \\
 \cmd{\tblfrkv{t}{keyval}[opts]} new table from key-vals using \cmd{luakeys} \\
-\cmd{\tblfrkvN{t}{keyval}[opts]} does not expand key-val string \cmd{luakeys} \\
-
-\cmd{\tblkvundefcheck} will throw an error if you use define a table from key-values
-and use a key that was not specified in the luakeys parse options via \cmd{opts.defaults} or \cmd{opts.defs}.\\
+\cmd{\tblfrkvN{t}{keyval}[opts]} does not expand key-val string \cmd{luakeys}. Note:
+\cmd{opts} are parsed using luakeys with the \cmd{naked_as_value=true}, so booleans must be explicitly set.\\
 \\
  \cmd{\tblfrcsv{t}{csv}[opts]} a shorthand \cmd{\tblfrkv{t}{csv}[naked_as_value=true,opts]}, a good way to convert  a comma-separated list to an array\\
  \cmd{\tblfrcsvN{t}{csv}[opts]} same as above, but the csv is not expanded.\\
+\\
+\cmd{\tblkvundefcheck} will throw an error if you use define a table from key-values
+and use a key that was not specified in the luakeys parse options via \cmd{opts.defaults} or \cmd{opts.defs}.\\
+\\
+\cmd{\tblenforcechoices{i}{csv}} will throw an error if the value of item \cmd{i} is not in the provided \cmd{csv}
 
 
 \subsection*{Setting, getting, and modifying}
@@ -204,16 +209,23 @@ The validity of table names and keys are not checked.\\
 
 \cmd{\tblif{i}{tr}[fa]} runs code \cmd{tr} if the item is true else \cmd{fa}\\
 \cmd{\tblifv{i}{tr}[fa]} runs code \cmd{tr} if the item is truth-y (using \cmd{pl.hasval}) else \cmd{fa}\\
-\cmd{\tblifeq{i}{v}{tr}[fa]} checks the equivalency of to a user-specified value. Quotes must be used to indicate strings.
+\cmd{\tblifeq{i}{v}{tr}[fa]} checks the equivalency of to a user-specified value.
+The value is fully expanded. Quotes must be used to indicate strings.\\
+\cmd{\tblifeqstr{i}{v}{tr}[fa]} checks the equivalency of to a user-specified value to a string (uses luastring).
 
 \begin{LTXexample}
+	\def\JJ{1}
 \tblfrcsv{x}{n=false,y=true,
-	k0="",kv=val,k2=6}
+	k0="",kv=val,k2=6,
+	k1=1,k11="1",
+}
 \tblif{n}{tr}[FA]\\
 \tblif{k0}{TR}[fa]\\
 \tblifv{k0}{tr}[FA]\\
 \tblifeq{kv}{'val'}{TR}[fa]\\
 \tblifeq{k2}{6}{TR}[fa]\\
+\tblifeq{k1}{\JJ}{Tr}
+\tblifeqstr{k11}{\JJ}{Tr}
 \end{LTXexample}
 
 
@@ -294,7 +306,7 @@ plain numbers are found, \cmd{sp} units are used (in case the \cmd{convert_dimen
 
 
 \begin{LTXexample}
-	\tblfrkv{ex}{alen=1cm,blen=2cm,clen=10mm*2+2cm}[convert_dimensions]
+	\tblfrkv{ex}{alen=1cm,blen=2cm,clen=10mm*2+2cm}[convert_dimensions=true]
 	\tblmakelengths{}[<k>]
 	I\hspace{\alen}I\\
 	I\hspace{\blen}I\\

@@ -150,6 +150,16 @@ function luatbls._check_recent_tbl_undefault()
     end
 end
 
+function luatbls._check_choices(k, csv)
+ local csv = penlight.List(luatbls._luakeys.parse(csv,{naked_as_value=true}))
+ local v = luatbls._get_tbl_item(k)
+    if not csv:contains(v) then
+        penlight.tex.pkgerror('luatbls', 'Invalid choice "'..v..'" given to tbl.key "'..k..'". Allowed choices are: '..
+        (', '):join(csv))
+    end
+end
+
+
 function luatbls._make_alpha_key(k)
      if tonumber(k) ~= nil then
          k = penlight.Char(tonumber(k))
